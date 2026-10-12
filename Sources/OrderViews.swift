@@ -52,7 +52,7 @@ struct OrderEditor: View {
             Text("Нові роботи автоматично додаються до прайсу з ціною після збереження. Ціну вже відомої роботи можна змінити для цього замовлення.").font(.footnote).foregroundStyle(.secondary)
         }.navigationTitle(quick ? "Швидкий ремонт" : "Нове замовлення")
             .onAppear { if !initialized { initialized = true; draft.quick = quick; store.saveDraft(draft) } }
-            .onChange(of: draftEncoded) { _, _ in if initialized && savedID == nil { store.saveDraft(draft) } }
+            .onChange(of: draft) { _, _ in if initialized && savedID == nil { store.saveDraft(draft) } }
             .onChange(of: total) { old, new in if quick && draft.advance == old { draft.advance = new } }
             .sheet(isPresented: Binding(get: { serviceItem != nil }, set: { if !$0 { serviceItem = nil } })) {
                 NavigationStack { ServicePicker { service in
@@ -67,7 +67,6 @@ struct OrderEditor: View {
             }
             .navigationDestination(isPresented: Binding(get: { savedID != nil }, set: { if !$0 { dismiss() } })) { if let id = savedID { OrderDetail(id: id) } }
     }
-    private var draftEncoded: Data { (try? JSONEncoder().encode(draft)) ?? Data() }
     private var total: Int { draft.items.flatMap(\.repairs).reduce(0) { $0 + $1.price } }
 }
 struct MoneyField: View {

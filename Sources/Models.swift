@@ -15,7 +15,7 @@ struct Client: Codable, Identifiable {
     var phone: String
     var note = ""
 }
-struct Repair: Codable, Identifiable {
+struct Repair: Codable, Identifiable, Equatable {
     var id = UUID()
     var title = ""
     var price = 0
@@ -73,14 +73,14 @@ struct Service: Codable, Identifiable {
     var price: Int
     var favorite = false
 }
-struct DraftItem: Codable, Identifiable {
+struct DraftItem: Codable, Identifiable, Equatable {
     var id = UUID()
     var name = ""
     var repairs = [Repair()]
     var due = Date()
     var urgent = false
 }
-struct Draft: Codable, Identifiable {
+struct Draft: Codable, Identifiable, Equatable {
     var id = UUID()
     var quick = false
     var clientID: UUID?

@@ -13,6 +13,14 @@ final class AtelierScreenTests: XCTestCase {
         XCTAssertTrue(app.textFields["Назва одягу"].exists)
         capture("02-Нове-замовлення", app: app)
 
+        // Введення та повторне відкривання мають залишатися чутливими після автозбереження.
+        app.textFields["Ім’я"].tap()
+        app.textFields["Ім’я"].typeText("Тест чернетки")
+        app.tabBars.buttons["Замовлення"].tap()
+        app.tabBars.buttons["Головна"].tap()
+        XCTAssertTrue(app.textFields["Ім’я"].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.textFields["Ім’я"].value as? String, "Тест чернетки")
+
         app.tabBars.buttons["Підсумки"].tap()
         XCTAssertTrue(app.staticTexts["Отримано"].waitForExistence(timeout: 10))
         capture("03-Підсумки-дня", app: app)
