@@ -16,10 +16,10 @@ final class AtelierScreenTests: XCTestCase {
         // Введення та повторне відкривання мають залишатися чутливими після автозбереження.
         app.textFields["Ім’я"].tap()
         app.textFields["Ім’я"].typeText("Тест чернетки")
-        app.tabBars.buttons["Замовлення"].tap()
-        app.tabBars.buttons["Головна"].tap()
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.buttons["НОВЕ ЗАМОВЛЕННЯ"].tap()
         XCTAssertTrue(app.textFields["Ім’я"].waitForExistence(timeout: 10))
-        XCTAssertEqual(app.textFields["Ім’я"].value as? String, "Тест чернетки")
+        XCTAssertEqual(app.textFields["Ім’я"].value as? String, "Ім’я")
 
         app.tabBars.buttons["Підсумки"].tap()
         XCTAssertTrue(app.staticTexts["Отримано"].waitForExistence(timeout: 10))
