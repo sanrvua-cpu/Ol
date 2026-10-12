@@ -47,6 +47,16 @@ import SwiftUI
             let total = items.reduce(0) { $0 + $1.total }
             guard !quick || draft.advance >= total || clientID != nil || !draft.note.isEmpty else { throw AppError.message("Для боргу вкажіть клієнта або примітку") }
             let order = Order(number: db.nextNumber, clientID: clientID, items: items, quick: quick, note: draft.note)
+            // Прайс поступово поповнюється лише після успішного збереження замовлення.
+            for repair in items.flatMap(\.repairs) {
+                let title = repair.title.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+                guard !title.isEmpty else { continue }
+                let key = title.lowercased()
+                let exists = db.services.contains {
+                    $0.title.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ").lowercased() == key
+                }
+                if !exists { db.services.append(Service(title: title, price: repair.price)) }
+            }
             db.nextNumber += 1; db.orders.append(order)
             if draft.advance > 0 { db.payments.append(Payment(orderID: order.id, amount: draft.advance, method: draft.method)) }
             db.drafts.removeAll { $0.id == draft.id }

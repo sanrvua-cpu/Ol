@@ -49,6 +49,7 @@ struct OrderEditor: View {
             Section { TextField("Примітка / домовленість", text: $draft.note, axis: .vertical) }
             Button("Зберегти замовлення") { savedID = store.commit(draft, quick: quick) }.font(.headline).disabled(savedID != nil)
             Text("Введені дані зберігаються як чернетка.").font(.footnote).foregroundStyle(.secondary)
+            Text("Нові роботи автоматично додаються до прайсу з ціною після збереження. Ціну вже відомої роботи можна змінити для цього замовлення.").font(.footnote).foregroundStyle(.secondary)
         }.navigationTitle(quick ? "Швидкий ремонт" : "Нове замовлення")
             .onAppear { if !initialized { initialized = true; draft.quick = quick; store.saveDraft(draft) } }
             .onChange(of: draftEncoded) { _, _ in if initialized && savedID == nil { store.saveDraft(draft) } }

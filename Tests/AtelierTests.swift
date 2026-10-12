@@ -58,6 +58,39 @@ import XCTest
         XCTAssertEqual(store.data.nextNumber, 1)
         XCTAssertEqual(try repository.load().nextNumber, 1)
     }
+    func testSavedOrdersGrowPriceListWithoutReplacingExistingPrice() throws {
+        let (store, repository) = try makeStore()
+        let first = draft(); store.saveDraft(first)
+        XCTAssertTrue(store.data.services.isEmpty)
+        _ = try XCTUnwrap(store.commit(first))
+        XCTAssertEqual(store.data.services.count, 2)
+        var second = draft()
+        second.items[0].repairs[0].title = "  ПІДШИТИ  "
+        second.items[0].repairs[0].price = 350
+        second.phone = "050 123 45 67"
+        store.saveDraft(second)
+        _ = try XCTUnwrap(store.commit(second))
+        let loaded = try repository.load()
+        XCTAssertEqual(loaded.services.count, 2)
+        XCTAssertEqual(loaded.services.first { $0.title == "Підшити" }?.price, 300)
+        XCTAssertEqual(loaded.orders[1].items[0].repairs[0].price, 350)
+        XCTAssertEqual(loaded.clients.count, 1)
+    }
+    func testQuickRepairAlsoAddsServiceAndFailedOrderDoesNot() throws {
+        let (store, _) = try makeStore()
+        var quick = Draft()
+        quick.items = [DraftItem(name: "Пришити ґудзик", repairs: [Repair(price: 50)])]
+        quick.advance = 50
+        store.saveDraft(quick)
+        _ = try XCTUnwrap(store.commit(quick, quick: true))
+        XCTAssertEqual(store.data.services.first?.title, "Пришити ґудзик")
+        XCTAssertEqual(store.data.services.first?.price, 50)
+        var invalid = draft(); invalid.name = ""; invalid.phone = ""
+        store.saveDraft(invalid)
+        XCTAssertNil(store.commit(invalid))
+        XCTAssertEqual(store.data.services.count, 1)
+        XCTAssertTrue(store.data.clients.isEmpty)
+    }
     func testEncryptedBackupRoundTripAndWrongPassword() throws {
         let (store, _) = try makeStore(); let draft = draft(); store.saveDraft(draft)
         _ = try XCTUnwrap(store.commit(draft))
