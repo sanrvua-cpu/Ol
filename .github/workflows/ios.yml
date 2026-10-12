@@ -10,7 +10,7 @@ concurrency:
 jobs:
   verify:
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - name: Install XcodeGen
@@ -23,9 +23,43 @@ jobs:
           echo "DEVICE_ID=$DEVICE_ID" >> "$GITHUB_ENV"
       - name: Build and test
         run: xcodebuild -project Atelier.xcodeproj -scheme Atelier -destination "platform=iOS Simulator,id=$DEVICE_ID" -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO test
+      - name: Export screen images
+        if: always()
+        run: |
+          if [ -d TestResults.xcresult ]; then
+            xcrun xcresulttool export attachments --path TestResults.xcresult --output-path Screenshots
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screen-images
+          path: Screenshots
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
           path: TestResults.xcresult
           if-no-files-found: ignore
+  device-package:
+    needs: verify
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Build for physical iPhone
+        run: xcodebuild -project Atelier.xcodeproj -scheme Atelier -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath DeviceBuild CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+      - name: Package unsigned IPA for AltStore
+        run: |
+          mkdir -p Distribution/Payload
+          ditto DeviceBuild/Build/Products/Release-iphoneos/Atelier.app Distribution/Payload/Atelier.app
+          cd Distribution
+          zip -qr ../Atelier-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Atelier-iPhone-unsigned
+          path: Atelier-unsigned.ipa
